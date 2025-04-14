@@ -1,0 +1,886 @@
+<?php
+function mpf_exibir_dados_publicos() {
+    global $wpdb;
+    $tabela = $wpdb->prefix . 'mais_medicos_respostas';
+
+    $resultados = $wpdb->get_results("SELECT idade, data_diploma, pontuacao, cotas, cidade_1opcao, estado_1opcao, cidade_2opcao, estado_2opcao, estado_nascimento, estado_residencia FROM $tabela");
+
+    ob_start();
+    ?>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #0a0e1a 0%, #1e2a44 100%);
+            color: #e2e8f0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Futuristic Background */
+        .background-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        .particle:nth-child(1) { width: 20px; height: 20px; top: 10%; left: 15%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 15px; height: 15px; top: 60%; left: 80%; animation-delay: 5s; }
+        .particle:nth-child(3) { width: 25px; height: 25px; top: 30%; left: 40%; animation-delay: 10s; }
+
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0); opacity: 0.8; }
+            50% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) translateX(20px); opacity: 0.8; }
+        }
+
+        /* Main Content */
+        .mais-medicos-dashboard {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .mpf-dados-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .mpf-dados-container h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Filters */
+        .mpf-filtros {
+            background: rgba(15, 23, 42, 0.9);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .mpf-filtros details {
+            margin-bottom: 0.5rem;
+        }
+
+        .mpf-filtros summary {
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #3b82f6;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .mpf-filtros summary:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .mpf-filtros label {
+            display: block;
+            font-size: 0.9rem;
+            color: #3b82f6;
+            margin-bottom: 0.3rem;
+        }
+
+        .mpf-filtros select {
+            width: 100%;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            color: #3b82f6;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        .mpf-filtros select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .mpf-filtros select option {
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .filter-button {
+            display: block;
+            margin: 1rem auto 0;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            color: #ffffff;
+            border: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .filter-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Charts */
+        .mpf-graficos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .chart-container canvas {
+            max-width: 100%;
+        }
+
+        .chart-toggle {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(59, 130, 246, 0.3);
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .chart-toggle:hover {
+            background: #3b82f6;
+        }
+
+        .chart-content {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .chart-content.minimized {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* Cards */
+        .mpf-dados {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .mpf-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .mpf-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .mpf-card strong {
+            color: #3b82f6;
+        }
+
+        .mpf-card p {
+            margin: 0.3rem 0;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .card-toggle {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(59, 130, 246, 0.3);
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .card-toggle:hover {
+            background: #3b82f6;
+        }
+
+        .card-content {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card-content.minimized {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .mais-medicos-dashboard {
+                padding: 0 0.5rem;
+            }
+
+            .mpf-graficos {
+                grid-template-columns: 1fr;
+            }
+
+            .mpf-dados {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            border-radius: 20px;
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { width: 40%; }
+            50% { width: 80%; }
+            100% { width: 40%; }
+        }
+
+        /* Custom Button */
+        .custom-button {
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .custom-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .custom-button svg {
+            fill: none;
+            stroke: #ffffff;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            color: #ffffff;
+        }
+
+        .tab-button:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+
+    <div class="mais-medicos-dashboard">
+        <!-- Futuristic Background Elements -->
+        <div class="background-effects">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="mpf-dados-container">
+            <h2>Resultado Mais Médicos - 41° Ciclo</h2>
+            <div class="progress-bar"></div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab('tab-1opcao')">1ª Opção</button>
+                <button class="tab-button" onclick="openTab('tab-2opcao')">2ª Opção</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tab-1opcao" class="tab-content active">
+                <!-- Filtros 1ª Opção -->
+                <div class="mpf-filtros">
+                    <details open>
+                        <summary>Filtros de Pesquisa (1ª Opção)</summary>
+                        <label>Estado da 1ª Opção</label>
+                        <select id="filtro_estado_1opcao">
+                            <option value="">Todos</option>
+                            <?php
+                            $estados_1 = array_unique(wp_list_pluck($resultados, 'estado_1opcao'));
+                            sort($estados_1);
+                            foreach ($estados_1 as $estado) {
+                                echo "<option value='" . esc_attr($estado) . "'>" . esc_html($estado) . "</option>";
+                            }
+                            ?>
+                        </select>
+
+                        <label>Cidade da 1ª Opção</label>
+                        <select id="filtro_cidade_1opcao">
+                            <option value="">Todos</option>
+                        </select>
+
+                        <label>Pontuação</label>
+                        <select id="filtro_pontuacao_1opcao">
+                            <option value="">Todas</option>
+                            <?php
+                            $pontuacoes = array_unique(wp_list_pluck($resultados, 'pontuacao'));
+                            sort($pontuacoes);
+                            foreach ($pontuacoes as $pontuacao) {
+                                echo "<option value='" . esc_attr($pontuacao) . "'>" . esc_html($pontuacao) . "</option>";
+                            }
+                            ?>
+                        </select>
+
+                        <label>Cotas</label>
+                        <select id="filtro_cotas_1opcao">
+                            <option value="">Todas</option>
+                            <?php
+                            $cotas = array_unique(wp_list_pluck($resultados, 'cotas'));
+                            sort($cotas);
+                            foreach ($cotas as $cota) {
+                                echo "<option value='" . esc_attr($cota) . "'>" . esc_html($cota) . "</option>";
+                            }
+                            ?>
+                        </select>
+
+                        <button class="filter-button" onclick="mpf_filtrar('1opcao')">Filtrar</button>
+                    </details>
+                </div>
+
+                <!-- Gráficos 1ª Opção -->
+                <div class="mpf-graficos">
+                    <div class="chart-container">
+                        <button class="chart-toggle" onclick="toggleChart(this)">−</button>
+                        <div class="chart-content">
+                            <canvas id="grafico_pontuacao_1opcao"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <button class="chart-toggle" onclick="toggleChart(this)">−</button>
+                        <div class="chart-content">
+                            <canvas id="grafico_cotas_1opcao"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <button class="chart-toggle" onclick="toggleChart(this)">−</button>
+                        <div class="chart-content">
+                            <canvas id="grafico_estado_1opcao"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards 1ª Opção -->
+                <div class="mpf-dados" id="dados_1opcao">
+                    <?php foreach ($resultados as $r): ?>
+                        <div class="mpf-card" 
+                             data-estado-1opcao="<?php echo esc_attr($r->estado_1opcao); ?>" 
+                             data-cidade-1opcao="<?php echo esc_attr($r->cidade_1opcao); ?>" 
+                             data-pontuacao="<?php echo esc_attr($r->pontuacao); ?>" 
+                             data-cotas="<?php echo esc_attr($r->cotas); ?>">
+                            <button class="card-toggle" onclick="toggleCard(this)">−</button>
+                            <div class="card-content">
+                                <p>Idade: <?php echo esc_html($r->idade); ?></p>
+                                <p>Diploma: <?php echo esc_html($r->data_diploma); ?></p>
+                                <p>Pontuação: <strong><?php echo esc_html($r->pontuacao); ?></strong></p>
+                                <p>Cotas: <?php echo esc_html($r->cotas); ?></p>
+                                <p>1ª Opção: <?php echo esc_html($r->cidade_1opcao . ' - ' . $r->estado_1opcao); ?></p>
+                                <p>Estado de Nascimento: <?php echo esc_html($r->estado_nascimento ?? 'Não informado'); ?></p>
+                                <p>Estado de Residência: <?php echo esc_html($r->estado_residencia ?? 'Não informado'); ?></p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div id="tab-2opcao" class="tab-content">
+                <!-- Filtros 2ª Opção -->
+                <div class="mpf-filtros">
+                    <details open>
+                        <summary>Filtros de Pesquisa (2ª Opção)</summary>
+                        <label>Estado da 2ª Opção</label>
+                        <select id="filtro_estado_2opcao">
+                            <option value="">Todos</option>
+                            <?php
+                            $estados_2 = array_unique(wp_list_pluck($resultados, 'estado_2opcao'));
+                            sort($estados_2);
+                            foreach ($estados_2 as $estado) {
+                                echo "<option value='" . esc_attr($estado) . "'>" . esc_html($estado) . "</option>";
+                            }
+                            ?>
+                        </select>
+
+                        <label>Cidade da 2ª Opção</label>
+                        <select id="filtro_cidade_2opcao">
+                            <option value="">Todos</option>
+                        </select>
+
+                        <label>Pontuação</label>
+                        <select id="filtro_pontuacao_2opcao">
+                            <option value="">Todas</option>
+                            <?php
+                            foreach ($pontuacoes as $pontuacao) {
+                                echo "<option value='" . esc_attr($pontuacao) . "'>" . esc_html($pontuacao) . "</option>";
+                            }
+                            ?>
+                        </select>
+
+                        <label>Cotas</label>
+                        <select id="filtro_cotas_2opcao">
+                            <option value="">Todas</option>
+                            <?php
+                            foreach ($cotas as $cota) {
+                                echo "<option value='" . esc_attr($cota) . "'>" . esc_html($cota) . "</option>";
+                            }
+                            ?>
+                        </select>
+
+                        <button class="filter-button" onclick="mpf_filtrar('2opcao')">Filtrar</button>
+                    </details>
+                </div>
+
+                <!-- Gráficos 2ª Opção -->
+                <div class="mpf-graficos">
+                    <div class="chart-container">
+                        <button class="chart-toggle" onclick="toggleChart(this)">−</button>
+                        <div class="chart-content">
+                            <canvas id="grafico_pontuacao_2opcao"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <button class="chart-toggle" onclick="toggleChart(this)">−</button>
+                        <div class="chart-content">
+                            <canvas id="grafico_cotas_2opcao"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <button class="chart-toggle" onclick="toggleChart(this)">−</button>
+                        <div class="chart-content">
+                            <canvas id="grafico_estado_2opcao"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards 2ª Opção -->
+                <div class="mpf-dados" id="dados_2opcao">
+                    <?php foreach ($resultados as $r): ?>
+                        <div class="mpf-card" 
+                             data-estado-2opcao="<?php echo esc_attr($r->estado_2opcao); ?>" 
+                             data-cidade-2opcao="<?php echo esc_attr($r->cidade_2opcao); ?>" 
+                             data-pontuacao="<?php echo esc_attr($r->pontuacao); ?>" 
+                             data-cotas="<?php echo esc_attr($r->cotas); ?>">
+                            <button class="card-toggle" onclick="toggleCard(this)">−</button>
+                            <div class="card-content">
+                                <p>Idade: <?php echo esc_html($r->idade); ?></p>
+                                <p>Diploma: <?php echo esc_html($r->data_diploma); ?></p>
+                                <p>Pontuação: <strong><?php echo esc_html($r->pontuacao); ?></strong></p>
+                                <p>Cotas: <?php echo esc_html($r->cotas); ?></p>
+                                <p>2ª Opção: <?php echo esc_html($r->cidade_2opcao . ' - ' . $r->estado_2opcao); ?></p>
+                                <p>Estado de Nascimento: <?php echo esc_html($r->estado_nascimento ?? 'Não informado'); ?></p>
+                                <p>Estado de Residência: <?php echo esc_html($r->estado_residencia ?? 'Não informado'); ?></p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Link Back to Formulário -->
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="https://analyticsmedico.com.br/formulario-pmmb/" 
+                   target="_blank" 
+                   class="custom-button" 
+                   rel="noopener noreferrer" 
+                   aria-label="Formulário 41° Ciclo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    Formulário 41° Ciclo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluindo Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dados Originais para Filtros Dinâmicos
+        const dadosOriginais = <?php
+            $dados = [];
+            foreach ($resultados as $r) {
+                $dados[] = [
+                    'estado_1opcao' => $r->estado_1opcao,
+                    'cidade_1opcao' => $r->cidade_1opcao,
+                    'estado_2opcao' => $r->estado_2opcao,
+                    'cidade_2opcao' => $r->cidade_2opcao,
+                    'pontuacao' => $r->pontuacao,
+                    'cotas' => $r->cotas
+                ];
+            }
+            echo json_encode($dados);
+        ?>;
+
+        // Função para Atualizar Cidades com Base no Estado
+        function atualizarCidades(estadoSelectId, cidadeSelectId) {
+            const estado = document.getElementById(estadoSelectId).value;
+            const cidadeSelect = document.getElementById(cidadeSelectId);
+            cidadeSelect.innerHTML = '<option value="">Todos</option>';
+
+            if (estado) {
+                const cidades = [...new Set(dadosOriginais
+                    .filter(d => d[estadoSelectId.replace('filtro_', '')] === estado)
+                    .map(d => d[cidadeSelectId.replace('filtro_', '')]))
+                ].sort();
+                cidades.forEach(cidade => {
+                    const option = document.createElement('option');
+                    option.value = cidade;
+                    option.textContent = cidade;
+                    cidadeSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Inicializar Cidades
+        document.getElementById('filtro_estado_1opcao').addEventListener('change', () => atualizarCidades('filtro_estado_1opcao', 'filtro_cidade_1opcao'));
+        document.getElementById('filtro_estado_2opcao').addEventListener('change', () => atualizarCidades('filtro_estado_2opcao', 'filtro_cidade_2opcao'));
+
+        // Função de Filtro
+        function mpf_filtrar(opcao) {
+            const prefix = opcao === '1opcao' ? '1opcao' : '2opcao';
+            const estado = document.getElementById(`filtro_estado_${prefix}`).value;
+            const cidade = document.getElementById(`filtro_cidade_${prefix}`).value;
+            const pontuacao = document.getElementById(`filtro_pontuacao_${prefix}`).value;
+            const cotas = document.getElementById(`filtro_cotas_${prefix}`).value;
+
+            const cards = document.querySelectorAll(`#dados_${prefix} .mpf-card`);
+            cards.forEach(card => {
+                const matchEstado = estado === "" || card.dataset[`estado${prefix}`] === estado;
+                const matchCidade = cidade === "" || card.dataset[`cidade${prefix}`] === cidade;
+                const matchPontuacao = pontuacao === "" || card.dataset.pontuacao === pontuacao;
+                const matchCotas = cotas === "" || card.dataset.cotas === cotas;
+
+                card.style.display = matchEstado && matchCidade && matchPontuacao && matchCotas ? "block" : "none";
+            });
+
+            atualizarGraficos(opcao);
+        }
+
+        // Toggle Chart
+        function toggleChart(button) {
+            const content = button.parentElement.querySelector('.chart-content');
+            content.classList.toggle('minimized');
+            button.textContent = content.classList.contains('minimized') ? '+' : '−';
+        }
+
+        // Toggle Card
+        function toggleCard(button) {
+            const content = button.parentElement.querySelector('.card-content');
+            content.classList.toggle('minimized');
+            button.textContent = content.classList.contains('minimized') ? '+' : '−';
+        }
+
+        // Tab Navigation
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`[onclick="openTab('${tabId}')"]`).classList.add('active');
+        }
+
+        // Dados para Gráficos
+        const dadosGraficos = <?php
+            $pontuacao_count = [];
+            $cotas_count = [];
+            $estado_1opcao_count = [];
+            $estado_2opcao_count = [];
+            foreach ($resultados as $r) {
+                $pontuacao_count[$r->pontuacao] = ($pontuacao_count[$r->pontuacao] ?? 0) + 1;
+                $cotas_count[$r->cotas] = ($cotas_count[$r->cotas] ?? 0) + 1;
+                $estado_1opcao_count[$r->estado_1opcao] = ($estado_1opcao_count[$r->estado_1opcao] ?? 0) + 1;
+                $estado_2opcao_count[$r->estado_2opcao] = ($estado_2opcao_count[$r->estado_2opcao] ?? 0) + 1;
+            }
+            echo json_encode([
+                'pontuacao' => $pontuacao_count,
+                'cotas' => $cotas_count,
+                'estado_1opcao' => $estado_1opcao_count,
+                'estado_2opcao' => $estado_2opcao_count
+            ]);
+        ?>;
+
+        // Configuração dos Gráficos
+        // 1ª Opção
+        const ctxPontuacao1 = document.getElementById('grafico_pontuacao_1opcao').getContext('2d');
+        const chartPontuacao1 = new Chart(ctxPontuacao1, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(dadosGraficos.pontuacao),
+                datasets: [{
+                    data: Object.values(dadosGraficos.pontuacao),
+                    backgroundColor: ['#3b82f6', '#7c3aed', '#22d3ee', '#facc15', '#fb923c', '#34d399']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { 
+                        display: true, 
+                        text: 'Distribuição por Pontuação (1ª Opção)',
+                        color: '#e2e8f0',
+                        font: { size: 16 }
+                    },
+                    legend: { labels: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        const ctxCotas1 = document.getElementById('grafico_cotas_1opcao').getContext('2d');
+        const chartCotas1 = new Chart(ctxCotas1, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(dadosGraficos.cotas),
+                datasets: [{
+                    data: Object.values(dadosGraficos.cotas),
+                    backgroundColor: ['#3b82f6', '#7c3aed']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { 
+                        display: true, 
+                        text: 'Distribuição por Cotas (1ª Opção)',
+                        color: '#e2e8f0',
+                        font: { size: 16 }
+                    },
+                    legend: { labels: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        const ctxEstado1 = document.getElementById('grafico_estado_1opcao').getContext('2d');
+        const chartEstado1 = new Chart(ctxEstado1, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(dadosGraficos.estado_1opcao),
+                datasets: [{
+                    data: Object.values(dadosGraficos.estado_1opcao),
+                    backgroundColor: ['#3b82f6', '#7c3aed', '#22d3ee', '#facc15', '#fb923c', '#34d399', '#a78bfa', '#f472b6']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { 
+                        display: true, 
+                        text: 'Distribuição por Estado (1ª Opção)',
+                        color: '#e2e8f0',
+                        font: { size: 16 }
+                    },
+                    legend: { labels: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        // 2ª Opção
+        const ctxPontuacao2 = document.getElementById('grafico_pontuacao_2opcao').getContext('2d');
+        const chartPontuacao2 = new Chart(ctxPontuacao2, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(dadosGraficos.pontuacao),
+                datasets: [{
+                    data: Object.values(dadosGraficos.pontuacao),
+                    backgroundColor: ['#3b82f6', '#7c3aed', '#22d3ee', '#facc15', '#fb923c', '#34d399']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { 
+                        display: true, 
+                        text: 'Distribuição por Pontuação (2ª Opção)',
+                        color: '#e2e8f0',
+                        font: { size: 16 }
+                    },
+                    legend: { labels: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        const ctxCotas2 = document.getElementById('grafico_cotas_2opcao').getContext('2d');
+        const chartCotas2 = new Chart(ctxCotas2, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(dadosGraficos.cotas),
+                datasets: [{
+                    data: Object.values(dadosGraficos.cotas),
+                    backgroundColor: ['#3b82f6', '#7c3aed']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { 
+                        display: true, 
+                        text: 'Distribuição por Cotas (2ª Opção)',
+                        color: '#e2e8f0',
+                        font: { size: 16 }
+                    },
+                    legend: { labels: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        const ctxEstado2 = document.getElementById('grafico_estado_2opcao').getContext('2d');
+        const chartEstado2 = new Chart(ctxEstado2, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(dadosGraficos.estado_2opcao),
+                datasets: [{
+                    data: Object.values(dadosGraficos.estado_2opcao),
+                    backgroundColor: ['#3b82f6', '#7c3aed', '#22d3ee', '#facc15', '#fb923c', '#34d399', '#a78bfa', '#f472b6']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { 
+                        display: true, 
+                        text: 'Distribuição por Estado (2ª Opção)',
+                        color: '#e2e8f0',
+                        font: { size: 16 }
+                    },
+                    legend: { labels: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        // Atualizar Gráficos com Filtros
+        function atualizarGraficos(opcao) {
+            const prefix = opcao === '1opcao' ? '1opcao' : '2opcao';
+            const cardsVisiveis = Array.from(document.querySelectorAll(`#dados_${prefix} .mpf-card`)).filter(card => card.style.display !== "none");
+            const novosDados = {
+                pontuacao: {},
+                cotas: {},
+                estado: {}
+            };
+
+            cardsVisiveis.forEach(card => {
+                const pontuacao = card.dataset.pontuacao;
+                const cotas = card.dataset.cotas;
+                const estado = card.dataset[`estado${prefix}`];
+
+                novosDados.pontuacao[pontuacao] = (novosDados.pontuacao[pontuacao] || 0) + 1;
+                novosDados.cotas[cotas] = (novosDados.cotas[cotas] || 0) + 1;
+                novosDados.estado[estado] = (novosDados.estado[estado] || 0) + 1;
+            });
+
+            const chartPontuacao = opcao === '1opcao' ? chartPontuacao1 : chartPontuacao2;
+            const chartCotas = opcao === '1opcao' ? chartCotas1 : chartCotas2;
+            const chartEstado = opcao === '1opcao' ? chartEstado1 : chartEstado2;
+
+            chartPontuacao.data.labels = Object.keys(novosDados.pontuacao);
+            chartPontuacao.data.datasets[0].data = Object.values(novosDados.pontuacao);
+            chartPontuacao.update();
+
+            chartCotas.data.labels = Object.keys(novosDados.cotas);
+            chartCotas.data.datasets[0].data = Object.values(novosDados.cotas);
+            chartCotas.update();
+
+            chartEstado.data.labels = Object.keys(novosDados.estado);
+            chartEstado.data.datasets[0].data = Object.values(novosDados.estado);
+            chartEstado.update();
+        }
+    </script>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('dados_mais_medicos', 'mpf_exibir_dados_publicos');
+?>
